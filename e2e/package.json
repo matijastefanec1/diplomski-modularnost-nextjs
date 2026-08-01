@@ -1,0 +1,20 @@
+{
+  "name": "@splitscore/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.15.0",
+    "pnpm": "11.4.0"
+  },
+  "scripts": {
+    "test:a": "cross-env TARGET_VARIANT=a playwright test",
+    "test:b": "cross-env TARGET_VARIANT=b playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0",
+    "@types/node": "24.13.3",
+    "cross-env": "10.1.0",
+    "typescript": "5.9.3"
+  }
+}
