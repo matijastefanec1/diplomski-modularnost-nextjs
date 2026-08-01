@@ -1,26 +1,34 @@
 {
-  "name": "diplomski-modularnost-nextjs",
+  "name": "splitscore-workspace",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": "24.15.0",
+    "pnpm": "11.4.0"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "dev:a": "pnpm --filter @splitscore/variant-a dev",
+    "dev:b": "pnpm --filter @splitscore/variant-b dev",
+    "build:a": "pnpm --filter @splitscore/variant-a build",
+    "build:b": "pnpm --filter @splitscore/variant-b build",
+    "lint:a": "pnpm --filter @splitscore/variant-a lint",
+    "lint:b": "pnpm --filter @splitscore/variant-b lint",
+    "typecheck:a": "pnpm --filter @splitscore/variant-a typecheck",
+    "typecheck:b": "pnpm --filter @splitscore/variant-b typecheck",
+    "unit:a": "pnpm --filter @splitscore/variant-a unit",
+    "unit:b": "pnpm --filter @splitscore/variant-b unit",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:migrate:a": "pnpm --filter @splitscore/variant-a prisma:migrate:deploy",
+    "db:migrate:b": "pnpm --filter @splitscore/variant-b prisma:migrate:deploy",
+    "db:smoke:a": "pnpm --filter @splitscore/variant-a test:integration",
+    "db:smoke:b": "pnpm --filter @splitscore/variant-b test:integration",
+    "prisma:check-parity": "node scripts/check-prisma-parity.mjs",
+    "e2e:a": "pnpm --filter @splitscore/e2e test:a",
+    "e2e:b": "pnpm --filter @splitscore/e2e test:b",
+    "verify:a": "pnpm prisma:check-parity && pnpm --filter @splitscore/variant-a verify && pnpm db:migrate:a && pnpm db:smoke:a && pnpm e2e:a",
+    "verify:b": "pnpm prisma:check-parity && pnpm --filter @splitscore/variant-b verify && pnpm db:migrate:b && pnpm db:smoke:b && pnpm e2e:b",
+    "verify": "pnpm verify:a && pnpm verify:b"
   }
 }
