@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Variant ${{ matrix.variant }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: a
+            package: "@splitscore/variant-a"
+            database: splitscore_a
+            e2e_script: test:a
+          - variant: b
+            package: "@splitscore/variant-b"
+            database: splitscore_b
+            e2e_script: test:b
+    services:
+      postgres:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_USER: splitscore
+          POSTGRES_PASSWORD: splitscore
+          POSTGRES_DB: ${{ matrix.database }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U splitscore -d ${{ matrix.database }}"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://splitscore:splitscore@localhost:5432/${{ matrix.database }}?schema=public
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.15.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Prisma parity
+        run: pnpm prisma:check-parity
+
+      - name: Lint
+        run: pnpm --filter ${{ matrix.package }} lint
+
+      - name: Test architecture boundaries
+        run: pnpm --filter ${{ matrix.package }} test:architecture
+
+      - name: Typecheck
+        run: pnpm --filter ${{ matrix.package }} typecheck
+
+      - name: Run unit and component tests
+        run: pnpm --filter ${{ matrix.package }} unit
+
+      - name: Generate and validate Prisma Client
+        run: >-
+          pnpm --filter ${{ matrix.package }} prisma:generate &&
+          pnpm --filter ${{ matrix.package }} prisma:validate
+
+      - name: Apply database migration
+        run: pnpm --filter ${{ matrix.package }} prisma:migrate:deploy
+
+      - name: Run database smoke test
+        run: pnpm --filter ${{ matrix.package }} test:integration
+
+      - name: Build
+        run: pnpm --filter ${{ matrix.package }} build
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @splitscore/e2e exec playwright install --with-deps chromium
+
+      - name: Run shared E2E smoke test
+        run: pnpm --filter @splitscore/e2e ${{ matrix.e2e_script }}
