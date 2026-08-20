@@ -3,6 +3,11 @@ import boundaries from "eslint-plugin-boundaries";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTypeScript from "eslint-config-next/typescript";
 
+const generatedPrismaImport = {
+  regex: "(^|/)generated/prisma(?:/|$)",
+  message: "Ovaj modul ne smije izravno koristiti generirani Prisma Client.",
+};
+
 const architectureFiles = [
   "app/**/*.{ts,tsx}",
   "features/**/*.{ts,tsx}",
@@ -71,6 +76,44 @@ export default defineConfig([
                 },
               },
             },
+            {
+              // evidencija meča treba prijavljenog igrača, a identitet ne smije kroz formu
+              // auth ne uvozi nijednu značajku, pa ciklusa nema
+              from: {
+                element: {
+                  type: "feature",
+                  captured: { featureName: "matches" },
+                },
+              },
+              allow: {
+                to: {
+                  element: {
+                    type: "feature",
+                    captured: { featureName: "auth" },
+                    fileInternalPath: ["index.ts", "index.tsx"],
+                  },
+                },
+              },
+            },
+            {
+              // registracija je u players i prijavljuje igrača kroz javno sučelje autha
+              // obrnuti smjer ostaje zabranjen, zato authorize() radi vlastiti upit
+              from: {
+                element: {
+                  type: "feature",
+                  captured: { featureName: "players" },
+                },
+              },
+              allow: {
+                to: {
+                  element: {
+                    type: "feature",
+                    captured: { featureName: "auth" },
+                    fileInternalPath: ["index.ts", "index.tsx"],
+                  },
+                },
+              },
+            },
           ],
         },
       ],
@@ -78,7 +121,8 @@ export default defineConfig([
     },
   },
   {
-    files: ["shared/**/*.{ts,tsx}"],
+    // Prefiks `**/` drži pravila primjenjivima i na arhitekturne fixture
+    files: ["**/shared/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -94,7 +138,26 @@ export default defineConfig([
     },
   },
   {
-    files: ["app/**/*.{ts,tsx}"],
+    files: ["**/features/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/features/*/*", "@/features/*/**"],
+              message: "Značajke se uvoze isključivo preko index.ts.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      "**/features/matches/lib/**/*.{ts,tsx}",
+      "**/features/scoring/lib/**/*.{ts,tsx}",
+    ],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -105,7 +168,44 @@ export default defineConfig([
               message: "Značajke se uvoze isključivo preko index.ts.",
             },
             {
-              group: ["@/generated/prisma", "@/generated/prisma/**"],
+              ...generatedPrismaImport,
+              message: "Čisti lib moduli ne smiju uvoziti Prismu.",
+            },
+            {
+              group: ["@prisma/*"],
+              message: "Čisti lib moduli ne smiju uvoziti Prismu.",
+            },
+            {
+              regex: "(^|/)shared/lib/prisma(?:$|[/.])",
+              message:
+                "Čisti lib moduli ne smiju uvoziti shared Prisma adapter.",
+            },
+            {
+              group: ["next", "next/*", "next/**"],
+              message: "Čisti lib moduli ne smiju uvoziti Next.js.",
+            },
+            {
+              group: ["next-auth", "next-auth/*", "@auth/*"],
+              message: "Čisti lib moduli ne smiju uvoziti Auth.js.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["**/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/features/*/*", "@/features/*/**"],
+              message: "Značajke se uvoze isključivo preko index.ts.",
+            },
+            {
+              ...generatedPrismaImport,
               message: "App rute ne smiju izravno koristiti Prismu.",
             },
           ],

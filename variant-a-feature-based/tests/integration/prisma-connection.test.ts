@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { describe, afterAll, it, expect } from "vitest";
 
 import { prisma } from "@/shared/lib/prisma";
 
