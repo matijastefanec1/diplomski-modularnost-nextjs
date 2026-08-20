@@ -10,8 +10,33 @@ permissions:
   contents: read
 
 jobs:
+  repository-architecture:
+    name: Repository architecture
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.15.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify repository import topology
+        run: pnpm verify:repository
+
   verify:
     name: Variant ${{ matrix.variant }}
+    needs: repository-architecture
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -81,6 +106,9 @@ jobs:
 
       - name: Apply database migration
         run: pnpm --filter ${{ matrix.package }} prisma:migrate:deploy
+
+      - name: Verify synthetic seed and cleanup tooling
+        run: pnpm --filter ${{ matrix.package }} test:synthetic-data
 
       - name: Run database smoke test
         run: pnpm --filter ${{ matrix.package }} test:integration
