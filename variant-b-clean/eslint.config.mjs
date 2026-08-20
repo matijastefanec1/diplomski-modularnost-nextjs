@@ -3,6 +3,11 @@ import boundaries from "eslint-plugin-boundaries";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTypeScript from "eslint-config-next/typescript";
 
+const generatedPrismaImport = {
+  regex: "(^|/)generated/prisma(?:/|$)",
+  message: "Generirani Prisma Client ostaje u infrastrukturnom sloju.",
+};
+
 const architectureFiles = [
   "app/**/*.{ts,tsx}",
   "src/**/*.{ts,tsx}",
@@ -25,6 +30,12 @@ export default defineConfig([
         { type: "infrastructure", pattern: "infrastructure" },
         { type: "presentation", pattern: "presentation" },
       ],
+      "boundaries/files": [
+        {
+          category: "composition-root",
+          pattern: "**/src/composition-root.ts",
+        },
+      ],
     },
     rules: {
       "boundaries/dependencies": [
@@ -41,6 +52,10 @@ export default defineConfig([
               allow: { to: { element: { type: "application" } } },
             },
             {
+              from: { element: { type: "presentation" } },
+              allow: { to: { file: { categories: "composition-root" } } },
+            },
+            {
               from: { element: { type: "application" } },
               allow: { to: { element: { type: "domain" } } },
             },
@@ -50,6 +65,16 @@ export default defineConfig([
                 to: {
                   element: {
                     types: { anyOf: ["application", "domain"] },
+                  },
+                },
+              },
+            },
+            {
+              from: { file: { categories: "composition-root" } },
+              allow: {
+                to: {
+                  element: {
+                    types: { anyOf: ["application", "infrastructure"] },
                   },
                 },
               },
@@ -71,6 +96,7 @@ export default defineConfig([
               regex: "^(?!\\.)",
               message: "Domenski sloj ne smije imati vanjske uvoze.",
             },
+            generatedPrismaImport,
           ],
         },
       ],
@@ -88,6 +114,7 @@ export default defineConfig([
               message:
                 "Aplikacijski sloj smije ovisiti samo o vlastitim modulima i domeni.",
             },
+            generatedPrismaImport,
           ],
         },
       ],
@@ -109,10 +136,11 @@ export default defineConfig([
               message:
                 "Prezentacijski sloj koristi aplikacijske use-caseove, ne infrastrukturu.",
             },
+            generatedPrismaImport,
             {
-              group: ["@/generated/prisma", "@/generated/prisma/**"],
+              group: ["next-auth", "next-auth/*", "next-auth/**"],
               message:
-                "Generirani Prisma Client ostaje u infrastrukturnom sloju.",
+                "Auth.js mehanika dolazi isključivo kroz composition root.",
             },
           ],
         },
@@ -120,17 +148,34 @@ export default defineConfig([
     },
   },
   {
-    files: ["app/**/*.{ts,tsx}"],
+    // Prefiks `**/` drži pravila primjenjivima i na arhitekturne fixture
+    files: ["**/app/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: ["@/generated/prisma", "@/generated/prisma/**"],
+              ...generatedPrismaImport,
               message: "app ne smije izravno koristiti generirani Prisma Client.",
             },
+            {
+              group: ["next-auth", "next-auth/*", "next-auth/**"],
+              message:
+                "Auth.js mehanika dolazi isključivo kroz composition root.",
+            },
           ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["**/src/composition-root*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [generatedPrismaImport],
         },
       ],
     },
