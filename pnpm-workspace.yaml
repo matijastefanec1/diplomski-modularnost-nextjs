@@ -1,6 +1,13 @@
+packages:
+  - variant-a-feature-based
+  - variant-b-clean
+  - e2e
+
 allowBuilds:
+  "@prisma/engines": true
+  prisma: true
   sharp: true
   unrs-resolver: true
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+
+minimumReleaseAgeExclude:
+  - jsdom@30.0.1

@@ -1,26 +1,59 @@
 {
-  "name": "diplomski-modularnost-nextjs",
+  "name": "splitscore-workspace",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": "24.15.0",
+    "pnpm": "11.4.0"
   },
-  "dependencies": {
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+  "scripts": {
+    "dev:a": "pnpm --filter @splitscore/variant-a dev",
+    "dev:b": "pnpm --filter @splitscore/variant-b dev",
+    "build:a": "pnpm --filter @splitscore/variant-a build",
+    "build:b": "pnpm --filter @splitscore/variant-b build",
+    "lint:a": "pnpm --filter @splitscore/variant-a lint",
+    "lint:b": "pnpm --filter @splitscore/variant-b lint",
+    "typecheck:a": "pnpm --filter @splitscore/variant-a typecheck",
+    "typecheck:b": "pnpm --filter @splitscore/variant-b typecheck",
+    "unit:a": "pnpm --filter @splitscore/variant-a unit",
+    "unit:b": "pnpm --filter @splitscore/variant-b unit",
+    "evaluation:coverage:a": "pnpm --filter @splitscore/variant-a coverage:evaluation:domain && pnpm --filter @splitscore/variant-a coverage:evaluation:status",
+    "evaluation:coverage:b": "pnpm --filter @splitscore/variant-b coverage:evaluation:domain && pnpm --filter @splitscore/variant-b coverage:evaluation:status",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:migrate:a": "pnpm --filter @splitscore/variant-a prisma:migrate:deploy",
+    "db:migrate:b": "pnpm --filter @splitscore/variant-b prisma:migrate:deploy",
+    "db:seed:a": "pnpm --filter @splitscore/variant-a seed",
+    "db:seed:b": "pnpm --filter @splitscore/variant-b seed",
+    "db:seed": "pnpm db:seed:a && pnpm db:seed:b",
+    "db:seed:check-parity": "node scripts/check-seed-parity.mjs",
+    "test:synthetic-data:a": "pnpm --filter @splitscore/variant-a test:synthetic-data",
+    "test:synthetic-data:b": "pnpm --filter @splitscore/variant-b test:synthetic-data",
+    "db:clean:preflight:a": "pnpm --filter @splitscore/variant-a clean:preflight",
+    "db:clean:a": "pnpm --filter @splitscore/variant-a run clean",
+    "db:clean:preflight:b": "pnpm --filter @splitscore/variant-b clean:preflight",
+    "db:clean:b": "pnpm --filter @splitscore/variant-b run clean",
+    "db:clean:preflight": "pnpm db:clean:preflight:a && pnpm db:clean:preflight:b",
+    "db:clean": "pnpm db:clean:a && pnpm db:clean:b",
+    "db:smoke:a": "pnpm --filter @splitscore/variant-a test:integration",
+    "db:smoke:b": "pnpm --filter @splitscore/variant-b test:integration",
+    "docs:check-links": "node scripts/check-documentation-links.mjs",
+    "prisma:check-parity": "node scripts/check-prisma-parity.mjs",
+    "e2e:a": "pnpm --filter @splitscore/e2e test:a",
+    "e2e:b": "pnpm --filter @splitscore/e2e test:b",
+    "lint:repository-imports": "eslint variant-a-feature-based variant-b-clean e2e --ignore-pattern \"**/.next/**\" --ignore-pattern \"**/generated/**\" --ignore-pattern \"**/tests/architecture-fixtures/**\"",
+    "test:architecture:repository": "node --test tests/repository-architecture.test.mjs",
+    "verify:repository": "pnpm lint:repository-imports && pnpm test:architecture:repository",
+    "verify:a": "pnpm prisma:check-parity && pnpm --filter @splitscore/variant-a verify && pnpm db:migrate:a && pnpm test:synthetic-data:a && pnpm db:smoke:a && pnpm e2e:a",
+    "verify:b": "pnpm prisma:check-parity && pnpm --filter @splitscore/variant-b verify && pnpm db:migrate:b && pnpm test:synthetic-data:b && pnpm db:smoke:b && pnpm e2e:b",
+    "verify": "pnpm verify:repository && pnpm verify:a && pnpm verify:b"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "eslint": "9.39.4",
+    "eslint-import-resolver-typescript": "3.10.1",
+    "eslint-plugin-boundaries": "7.1.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.59.4"
   }
 }

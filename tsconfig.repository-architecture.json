@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "strict": true,
+    "target": "ES2017"
+  },
+  "include": [
+    "variant-a-feature-based/**/*.ts",
+    "variant-a-feature-based/**/*.tsx",
+    "variant-b-clean/**/*.ts",
+    "variant-b-clean/**/*.tsx",
+    "e2e/**/*.ts",
+    "e2e/**/*.tsx",
+    "tests/repository-architecture-fixtures/**/*.ts",
+    "tests/repository-architecture-fixtures/**/*.tsx"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/.next",
+    "**/generated"
+  ]
+}

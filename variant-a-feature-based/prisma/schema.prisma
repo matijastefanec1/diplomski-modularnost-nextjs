@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MatchStatus {
+  PENDING_CONFIRMATION
+  SCORED
+  DISPUTED
+  EXPIRED
+
+  @@map("match_status")
+}
+
+enum MatchSide {
+  A
+  B
+
+  @@map("match_side")
+}
+
+model Player {
+  id             String             @id @default(uuid()) @db.Uuid
+  name           String             @db.VarChar(80)
+  email          String             @unique(map: "players_email_key") @db.VarChar(254)
+  passwordHash   String             @map("password_hash") @db.VarChar(255)
+  points         Int                @default(1000)
+  registeredAt   DateTime           @default(now()) @map("registered_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  reportedMatches Match[]            @relation("MatchReporter")
+  participations MatchParticipant[]
+
+  @@index([points(sort: Desc), registeredAt(sort: Asc), id(sort: Asc)], map: "players_ranking_idx")
+  @@map("players")
+}
+
+model Match {
+  id           String             @id @default(uuid()) @db.Uuid
+  reporterId   String             @map("reporter_id") @db.Uuid
+  status       MatchStatus        @default(PENDING_CONFIRMATION)
+  recordedAt   DateTime           @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  resolvedAt   DateTime?          @map("resolved_at") @db.Timestamptz(3)
+  scoredAt     DateTime?          @map("scored_at") @db.Timestamptz(3)
+  updatedAt    DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  reporter     Player             @relation("MatchReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  participants MatchParticipant[]
+  sets         MatchSet[]
+
+  @@index([status, recordedAt], map: "matches_expiration_idx")
+  @@index([scoredAt], map: "matches_activity_idx")
+  @@map("matches")
+}
+
+model MatchParticipant {
+  matchId      String    @map("match_id") @db.Uuid
+  playerId     String    @map("player_id") @db.Uuid
+  side         MatchSide
+  basePoints   Int?      @map("base_points")
+  activityBonus Int?      @map("activity_bonus")
+  totalPoints  Int?      @map("total_points")
+  match        Match     @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  player       Player    @relation(fields: [playerId], references: [id], onDelete: Restrict)
+
+  @@id([matchId, playerId], map: "match_participants_pkey")
+  @@index([playerId, matchId], map: "match_participants_history_idx")
+  @@index([matchId, side], map: "match_participants_side_idx")
+  @@map("match_participants")
+}
+
+model MatchSet {
+  matchId    String @map("match_id") @db.Uuid
+  setNumber  Int    @map("set_number")
+  teamAGames Int    @map("team_a_games")
+  teamBGames Int    @map("team_b_games")
+  match      Match  @relation(fields: [matchId], references: [id], onDelete: Restrict)
+
+  @@id([matchId, setNumber], map: "match_sets_pkey")
+  @@map("match_sets")
+}
