@@ -84,6 +84,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Auth.js secret for this run
+        run: echo "AUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
       - name: Verify Prisma parity
         run: pnpm prisma:check-parity
 

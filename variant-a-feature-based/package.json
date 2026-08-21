@@ -12,7 +12,7 @@
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ignore-pattern tests/architecture-fixtures/**",
+    "lint": "eslint . --ignore-pattern \"tests/architecture-fixtures/**\"",
     "typecheck": "tsc --noEmit",
     "unit": "vitest run --config vitest.config.ts",
     "coverage:evaluation:domain": "vitest run --coverage --config vitest.evaluation-domain.config.ts",
